@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador de Documentos</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.3/flowbite.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #3b82f6;
+            --color-secondary: #1f2937;
+        }
+
+        .dark {
+            --color-primary: #60a5fa;
+            --color-secondary: #f3f4f6;
+        }
+
+        .custom-dropzone {
+            border-width: 2px;
+            border-style: dashed;
+            transition: border-color 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            padding: 1.5rem;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .custom-dropzone:hover {
+            border-color: var(--color-primary);
+            background-color: #eff6ff;
+        }
+
+        .dark .custom-dropzone:hover {
+            border-color: var(--color-primary);
+            background-color: #1e3a8a;
+        }
+
+        .custom-dropzone.dragover {
+            border-color: var(--color-primary);
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-toggle button {
+            background-color: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            color: #111827;
+            border-radius: 0.375rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dark .theme-toggle button {
+            background-color: #1f2937;
+            color: #f3f4f6;
+        }
+
+        .theme-toggle button svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .transition-all {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .tooltip {
+            position: absolute;
+            top: -1.5rem;
+            right: 0;
+            background-color: #4b5563;
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        /* Estilo para las tarjetas */
+.paragraph-card {
+    border: 1px solid #e5e7eb; /* Borde claro */
+    background-color: #fff; /* Fondo claro */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Transiciones suaves */
+}
+
+.dark .paragraph-card {
+    border: 1px solid #374151; /* Borde oscuro */
+    background-color: #1f2937; /* Fondo oscuro */
+}
+
+.paragraph-card:hover {
+    background-color: #f9fafb; /* Fondo más claro al hacer hover */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+.dark .paragraph-card:hover {
+    background-color: #374151; /* Fondo más oscuro al hacer hover */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); /* Sombra suave */
+}
+
+/* Estilo para las tarjetas de figuras */
+.figure-card {
+    border: 1px solid #e5e7eb; /* Borde claro */
+    background-color: #fff; /* Fondo claro */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Transiciones suaves */
+}
+
+.dark .figure-card {
+    border: 1px solid #374151; /* Borde oscuro */
+    background-color: #1f2937; /* Fondo oscuro */
+}
+
+.figure-card:hover {
+    background-color: #f9fafb; /* Fondo más claro al hacer hover */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+.dark .figure-card:hover {
+    background-color: #374151; /* Fondo más oscuro al hacer hover */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); /* Sombra suave */
+}
+
+/* Estilo para la sección de notas dentro de la tarjeta de figuras */
+.figure-card .note {
+    background-color: #f3f4f6; /* Fondo claro para nota */
+    border-left: 4px solid #3b82f6; /* Borde lateral */
+    padding: 1rem;
+    border-radius: 0.375rem;
+    margin-top: 1rem;
+}
+
+.dark .figure-card .note {
+    background-color: #374151; /* Fondo oscuro para nota */
+    border-left: 4px solid #60a5fa; /* Borde lateral en modo oscuro */
+}
+
+/* Estilo para las tarjetas de referencias */
+.reference-card {
+    border: 1px solid #e5e7eb; /* Borde claro */
+    background-color: #fff; /* Fondo claro */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Transiciones suaves */
+}
+
+.dark .reference-card {
+    border: 1px solid #374151; /* Borde oscuro */
+    background-color: #1f2937; /* Fondo oscuro */
+}
+
+.reference-card:hover {
+    background-color: #f9fafb; /* Fondo más claro al hacer hover */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+.dark .reference-card:hover {
+    background-color: #374151; /* Fondo más oscuro al hacer hover */
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); /* Sombra suave */
+}
+
+#toast-container .toast {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#toast-container .toast.opacity-100 {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Estilo personalizado para los botones de copiar */
+button.copy-button {
+    background-color: #3b82f6; /* Azul por defecto */
+    color: #ffffff; /* Texto blanco */
+    padding: 0.5rem 1rem; /* Espaciado interno */
+    border-radius: 0.375rem; /* Bordes redondeados */
+    display: flex; /* Flex para alinear ícono y texto */
+    align-items: center; /* Centrar verticalmente */
+    gap: 0.5rem; /* Espaciado entre ícono y texto */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+button.copy-button:hover {
+    background-color: #2563eb; /* Azul más oscuro al hacer hover */
+}
+
+button.copy-button:active {
+    background-color: #1d4ed8; /* Azul más oscuro al hacer click */
+}
+
+button.copy-button.copied {
+    background-color: #10b981; /* Verde para indicar copiado */
+}
+/* Estilo personalizado para el botón de copiar en figuras */
+button.copy-figure-button {
+    background-color: #3b82f6; /* Azul por defecto */
+    color: #ffffff; /* Texto blanco */
+    padding: 0.5rem 1rem; /* Espaciado interno */
+    border-radius: 0.375rem; /* Bordes redondeados */
+    display: flex; /* Flex para alinear ícono y texto */
+    align-items: center; /* Centrar verticalmente */
+    gap: 0.5rem; /* Espaciado entre ícono y texto */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+button.copy-figure-button:hover {
+    background-color: #2563eb; /* Azul más oscuro al hacer hover */
+}
+
+button.copy-figure-button:active {
+    background-color: #1d4ed8; /* Azul más oscuro al hacer click */
+}
+
+button.copy-figure-button.copied {
+    background-color: #10b981; /* Verde para indicar copiado */
+}
+/* Estilo personalizado para los botones de copiar */
+button.copy-button {
+    background-color: #3b82f6; /* Azul por defecto */
+    color: #ffffff; /* Texto blanco */
+    padding: 0.5rem 1rem; /* Espaciado interno */
+    border-radius: 0.375rem; /* Bordes redondeados */
+    display: flex; /* Flex para alinear ícono y texto */
+    align-items: center; /* Centrar verticalmente */
+    gap: 0.5rem; /* Espaciado entre ícono y texto */
+    transition: background-color 0.3s ease; /* Transición suave */
+}
+
+button.copy-button:hover {
+    background-color: #2563eb; /* Azul más oscuro al hacer hover */
+}
+
+button.copy-button:active {
+    background-color: #1d4ed8; /* Azul más oscuro al hacer click */
+}
+
+button.copy-button.copied {
+    background-color: #10b981; /* Verde para indicar copiado */
+}
+
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-all">
+
+    <!-- Toast de notificación -->
+    <div id="toast-container" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+
+    <!-- Botón de cambio de tema -->
+    <div class="theme-toggle">
+        <button id="theme-toggle-btn" aria-label="Cambiar tema">
+            <svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path d="M12 3.75V6.75M4.92 6.75l2.121 2.121M4.92 17.25L7.042 15.13M12 17.25V20.25M19.08 17.25L16.959 15.13M19.08 6.75l-2.121 2.121M3.75 12H6.75M17.25 12H20.25M12 17.25A5.25 5.25 0 0 1 12 6.75M12 17.25V12.75M12 6.75V12M19.08 6.75L16.959 15.13" />
+            </svg>
+            Cambiar a modo claro
+        </button>
+    </div>
+
+    <div class="container mx-auto py-10 px-4">
+        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+            <h1 class="text-3xl font-bold mb-6 text-center dark:text-white">Procesador de Documentos</h1>
+
+            <!-- Dropzone para cargar archivos -->
+            <div class="flex items-center justify-center w-full mb-6">
+                <label for="dropzone-file" class="custom-dropzone flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 transition">
+                    <div id="dropzone" class="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg class="w-10 h-10 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                        </svg>
+                        <p class="mb-2 text-lg text-gray-500 dark:text-gray-400"><span class="font-semibold">Haga clic para cargar</span> o arrastre y suelte</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Solo archivos .docx</p>
+                    </div>
+                    <input id="dropzone-file" type="file" class="hidden" accept=".docx" />
+                </label>
+            </div>
+
+            <!-- Barra de progreso -->
+            <div class="mb-6">
+                <div id="progress-container" class="w-full bg-gray-200 dark:bg-gray-600 rounded-lg h-2">
+                    <div id="progress-bar" class="bg-blue-500 h-2 rounded-lg transition-all duration-500" style="width: 0%;"></div>
+                </div>
+                <p id="progress-text" class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">Progreso: 0%</p>
+            </div>
+
+            <!-- Botón para procesar documento -->
+            <div class="text-center">
+                <button id="process-button" class="bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Procesar Documento
+                </button>
+            </div>
+        </div>
+
+        <!-- Secciones de contenido, figuras y referencias -->
+        <div class="mt-10 bg-gray-50 dark:bg-gray-900 p-6 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-200">Secciones del Documento</h2>
+
+    <!-- Contenedor de Párrafos Procesados (Ocupa toda la pantalla) -->
+    <div class="mb-10">
+        <h3 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Párrafos</h3>
+        <div id="content" class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 space-y-4 overflow-auto max-h-96">
+            <!-- Aquí se mostrarán las tarjetas de párrafos procesados -->
+        </div>
+    </div>
+
+    <!-- Contenedor de Figuras y Referencias (Apilados debajo de los párrafos) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Contenedor de Figuras Procesadas -->
+        <div>
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Figuras</h3>
+            <div id="figures" class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 space-y-4 overflow-auto max-h-96">
+                <!-- Aquí se mostrarán las tarjetas de figuras procesadas -->
+            </div>
+        </div>
+
+        <!-- Contenedor de Referencias Procesadas -->
+        <div>
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-300">Referencias</h3>
+            <div id="references" class="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 space-y-4 overflow-auto max-h-96">
+                <!-- Aquí se mostrarán las tarjetas de referencias procesadas -->
+            </div>
+        </div>
+    </div>
+</div>
+
+        
+        
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.3/flowbite.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.10/clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script> <!-- Cargar mammoth.js -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggleBtn = document.getElementById('theme-toggle-btn');
+            const htmlElement = document.documentElement;
+            
+            // Inicializar tema basado en la preferencia almacenada
+            if (localStorage.getItem('theme') === 'light') {
+                htmlElement.classList.remove('dark');
+                themeToggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path d="M12 3.75V6.75M4.92 6.75l2.121 2.121M4.92 17.25L7.042 15.13M12 17.25V20.25M19.08 17.25L16.959 15.13M19.08 6.75l-2.121 2.121M3.75 12H6.75M17.25 12H20.25M12 17.25A5.25 5.25 0 0 1 12 6.75M12 17.25V12.75M12 6.75V12M19.08 6.75L16.959 15.13" />
+                </svg> Cambiar a modo oscuro`;
+            } else {
+                htmlElement.classList.add('dark');
+                themeToggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path d="M12 3.75V6.75M4.92 6.75l2.121 2.121M4.92 17.25L7.042 15.13M12 17.25V20.25M19.08 17.25L16.959 15.13M19.08 6.75l-2.121 2.121M3.75 12H6.75M17.25 12H20.25M12 17.25A5.25 5.25 0 0 1 12 6.75M12 17.25V12.75M12 6.75V12M19.08 6.75L16.959 15.13" />
+                </svg> Cambiar a modo claro`;
+            }
+
+            // Evento de cambio de tema
+            themeToggleBtn.addEventListener('click', () => {
+                htmlElement.classList.toggle('dark');
+                if (htmlElement.classList.contains('dark')) {
+                    themeToggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path d="M12 3.75V6.75M4.92 6.75l2.121 2.121M4.92 17.25L7.042 15.13M12 17.25V20.25M19.08 17.25L16.959 15.13M19.08 6.75l-2.121 2.121M3.75 12H6.75M17.25 12H20.25M12 17.25A5.25 5.25 0 0 1 12 6.75M12 17.25V12.75M12 6.75V12M19.08 6.75L16.959 15.13" />
+                    </svg> Cambiar a modo claro`;
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    themeToggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path d="M12 3.75V6.75M4.92 6.75l2.121 2.121M4.92 17.25L7.042 15.13M12 17.25V20.25M19.08 17.25L16.959 15.13M19.08 6.75l-2.121 2.121M3.75 12H6.75M17.25 12H20.25M12 17.25A5.25 5.25 0 0 1 12 6.75M12 17.25V12.75M12 6.75V12M19.08 6.75L16.959 15.13" />
+                    </svg> Cambiar a modo oscuro`;
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
