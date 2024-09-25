@@ -124,26 +124,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const referencePattern = /\[(\d+)\]/g; // Patrón para detectar referencias [1], [2], etc.
         const references = {};
         let contentFlow = []; // Array para almacenar el contenido con el orden natural
-
+    
+        let isTableContent = false; // Variable para rastrear si estamos dentro de una tabla
+        let preserveNextParagraph = false; // Variable para preservar el párrafo que sigue al contenido de la tabla
+    
         // Suponemos que la sección de referencias comienza con "Referencias" en el texto
         const refSectionStart = content.toLowerCase().indexOf("referencias");
         if (refSectionStart === -1) {
             alert('No se encontró la sección de Referencias en el documento.');
             return { contentFlow: [], references: [], figures: [] };
         }
-
+    
         const refSection = content.substring(refSectionStart);
-
+    
         const refLines = refSection.split('\n').filter(line => line.trim() !== '');
-
+    
         // Procesar referencias considerando que la URL podría estar en la siguiente línea
         const fullReferences = []; // Array para almacenar las referencias completas
         let currentReference = ""; // Variable para acumular el contenido de la referencia actual
         let currentNumber = ""; // Variable para almacenar el número de referencia actual
-
+    
         for (let i = 0; i < refLines.length; i++) {
             const line = refLines[i].trim();
-
+    
             // Verificar si la línea comienza con una referencia nueva
             const refMatch = line.match(/^\[(\d+)\]\s*(.*)$/);
             if (refMatch) {
@@ -158,54 +161,83 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Si la línea no es vacía, añadirla a la referencia actual
                 currentReference += " " + line;
             }
-
+    
             // Verificar si la línea contiene una URL
             const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
             if (urlMatch && currentNumber) {
                 references[currentNumber] = urlMatch[0];
             }
         }
-
+    
         // Agregar la última referencia si existe
         if (currentReference !== "" && currentNumber !== "") {
             fullReferences.push({ number: currentNumber, content: currentReference });
         }
-
+    
         // Eliminar "Available:" de las referencias y limpiar el formato
         fullReferences.forEach(ref => {
             ref.content = ref.content.replace("Available:", "").trim(); // Reemplazar y limpiar
         });
-
+    
         let processedText = content.substring(0, refSectionStart);
-
+    
         // Procesar contenido línea por línea para mantener el orden natural
         processedText.split(/\n{2,}/).forEach((paragraph, index, lines) => {
-            // Detectar si el párrafo comienza con "Figura" seguido de un número.
-            if (paragraph.trim().toLowerCase().match(/^figura\s+\d+/)) {
-                let note = "";
-        
-                // Verificar si la siguiente línea contiene una nota
-                const nextLine = lines[index + 1] || "";
-                if (nextLine.toLowerCase().includes("nota")) {
-                    note = nextLine.trim();
-                }
-        
-                contentFlow.push({
-                    type: 'figure',
-                    content: paragraph.trim(),
-                    note: note
-                });
-            } else if (paragraph.trim() !== "") {
-                // Si no comienza con "Figura", tratar como un párrafo normal
+            const trimmedParagraph = paragraph.trim();
+    
+            // Detectar inicio de tabla, pero preservar el primer párrafo con "Tabla"
+            if (trimmedParagraph.toLowerCase().match(/^tabla\s+\d+/)) {
+                isTableContent = true; // Comienza contenido de la tabla
                 contentFlow.push({
                     type: 'paragraph',
-                    content: paragraph.trim()
+                    content: trimmedParagraph // Guardar el primer párrafo de descripción de la tabla
                 });
+                return; // Continuar al siguiente párrafo
+            }
+    
+            // Detectar fin de tabla, pero preservar la nota
+            if (isTableContent && trimmedParagraph.toLowerCase().includes("nota.")) {
+                isTableContent = false; // Finaliza el contenido de la tabla
+                preserveNextParagraph = true; // Preservar el siguiente párrafo
+            }
+    
+            // Verificar si es el siguiente párrafo a la tabla (la nota)
+            if (preserveNextParagraph) {
+                contentFlow.push({
+                    type: 'paragraph',
+                    content: trimmedParagraph // Guardar la nota después de la tabla
+                });
+                preserveNextParagraph = false; // Restablecer la variable
+                return; // Continuar al siguiente párrafo
+            }
+    
+            // Si no estamos dentro de una tabla, procesar el párrafo normalmente
+            if (!isTableContent) {
+                // Detectar si el párrafo comienza con "Figura" seguido de un número.
+                if (trimmedParagraph.match(/^figura\s+\d+/i)) {
+                    let note = "";
+    
+                    // Verificar si la siguiente línea contiene una nota
+                    const nextLine = lines[index + 1] || "";
+                    if (nextLine.toLowerCase().includes("nota")) {
+                        note = nextLine.trim();
+                    }
+    
+                    contentFlow.push({
+                        type: 'figure',
+                        content: trimmedParagraph,
+                        note: note
+                    });
+                } else if (trimmedParagraph !== "") {
+                    // Si no comienza con "Figura", tratar como un párrafo normal
+                    contentFlow.push({
+                        type: 'paragraph',
+                        content: trimmedParagraph
+                    });
+                }
             }
         });
-        
-
-
+    
         // Reemplazar referencias en el contenido principal
         contentFlow = contentFlow.map(item => {
             if (item.type === 'paragraph') {
@@ -216,9 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return item;
         });
-
+    
         return { contentFlow: contentFlow, references: fullReferences };
     }
+    
 
     // Función para mostrar el contenido procesado en el HTML
     function displayContent(parsedContent) {
