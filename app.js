@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let contentFlow = []; // Array para almacenar el contenido con el orden natural
     
         let isTableContent = false; // Variable para rastrear si estamos dentro de una tabla
-        let preserveNextParagraph = false; // Variable para preservar el párrafo que sigue al contenido de la tabla
+        let captureNextAsNote = false; // Variable para capturar el siguiente párrafo como nota de la figura
     
         // Suponemos que la sección de referencias comienza con "Referencias" en el texto
         const refSectionStart = content.toLowerCase().indexOf("referencias");
@@ -185,29 +185,26 @@ document.addEventListener('DOMContentLoaded', () => {
         processedText.split(/\n{2,}/).forEach((paragraph, index, lines) => {
             const trimmedParagraph = paragraph.trim();
     
-            // Detectar inicio de tabla, pero preservar el primer párrafo con "Tabla"
+            // Detectar inicio de tabla y tratarlo como figura
             if (trimmedParagraph.toLowerCase().match(/^tabla\s+\d+/)) {
                 isTableContent = true; // Comienza contenido de la tabla
+                captureNextAsNote = true; // Esperar el siguiente párrafo como nota
                 contentFlow.push({
-                    type: 'paragraph',
-                    content: trimmedParagraph // Guardar el primer párrafo de descripción de la tabla
+                    type: 'figure',
+                    content: trimmedParagraph, // Tratar el primer párrafo de descripción de la tabla como figura
+                    note: "" // Inicialmente, sin nota
                 });
                 return; // Continuar al siguiente párrafo
             }
     
-            // Detectar fin de tabla, pero preservar la nota
-            if (isTableContent && trimmedParagraph.toLowerCase().includes("nota.")) {
-                isTableContent = false; // Finaliza el contenido de la tabla
-                preserveNextParagraph = true; // Preservar el siguiente párrafo
-            }
-    
-            // Verificar si es el siguiente párrafo a la tabla (la nota)
-            if (preserveNextParagraph) {
-                contentFlow.push({
-                    type: 'paragraph',
-                    content: trimmedParagraph // Guardar la nota después de la tabla
-                });
-                preserveNextParagraph = false; // Restablecer la variable
+            // Capturar el siguiente párrafo como nota si es necesario
+            if (captureNextAsNote && trimmedParagraph.toLowerCase().includes("nota")) {
+                if (contentFlow.length > 0 && contentFlow[contentFlow.length - 1].type === 'figure') {
+                    // Agregar la nota a la última figura agregada
+                    contentFlow[contentFlow.length - 1].note = trimmedParagraph;
+                }
+                captureNextAsNote = false; // Restablecer la variable
+                isTableContent = false; // Fin de la tabla
                 return; // Continuar al siguiente párrafo
             }
     
