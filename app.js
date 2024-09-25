@@ -180,27 +180,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Procesar contenido línea por línea para mantener el orden natural
         processedText.split(/\n{2,}/).forEach((paragraph, index, lines) => {
-            if (paragraph.toLowerCase().includes("figura")) {
+            // Detectar si el párrafo comienza con "Figura" seguido de un número.
+            if (paragraph.trim().toLowerCase().match(/^figura\s+\d+/)) {
                 let note = "";
-
+        
                 // Verificar si la siguiente línea contiene una nota
                 const nextLine = lines[index + 1] || "";
-                if (nextLine.toLowerCase().includes("nota:")) {
+                if (nextLine.toLowerCase().includes("nota")) {
                     note = nextLine.trim();
                 }
-
+        
                 contentFlow.push({
                     type: 'figure',
                     content: paragraph.trim(),
                     note: note
                 });
             } else if (paragraph.trim() !== "") {
+                // Si no comienza con "Figura", tratar como un párrafo normal
                 contentFlow.push({
                     type: 'paragraph',
                     content: paragraph.trim()
                 });
             }
         });
+        
 
 
         // Reemplazar referencias en el contenido principal
@@ -355,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
                     const noteOrder = document.createElement('span');
                     noteOrder.classList.add('text-gray-500', 'dark:text-gray-400', 'italic');
-                    noteOrder.textContent = `Nota ${order}:`;
+                    noteOrder.textContent = `Nota ${order}.`;
             
                     const copyNoteButton = document.createElement('button');
                     copyNoteButton.textContent = 'Copiar Nota';
