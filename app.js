@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
         let isTableContent = false; // Variable para rastrear si estamos dentro de una tabla
         let captureNextAsNote = false; // Variable para capturar el siguiente párrafo como nota de la figura
+        let skipNextParagraph = false; // Variable para omitir el siguiente párrafo en la sección de párrafos
     
         // Suponemos que la sección de referencias comienza con "Referencias" en el texto
         const refSectionStart = content.toLowerCase().indexOf("referencias");
@@ -205,7 +206,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 captureNextAsNote = false; // Restablecer la variable
                 isTableContent = false; // Fin de la tabla
+                skipNextParagraph = true; // Omitir el siguiente párrafo de la sección de párrafos
                 return; // Continuar al siguiente párrafo
+            }
+    
+            // Omitir el siguiente párrafo si es la nota que ya se agregó a la figura
+            if (skipNextParagraph) {
+                skipNextParagraph = false; // Restablecer la variable
+                return; // Omitir este párrafo
             }
     
             // Si no estamos dentro de una tabla, procesar el párrafo normalmente
@@ -225,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         content: trimmedParagraph,
                         note: note
                     });
+                    skipNextParagraph = true; // Omitir el siguiente párrafo si es la nota que ya se agregó
                 } else if (trimmedParagraph !== "") {
                     // Si no comienza con "Figura", tratar como un párrafo normal
                     contentFlow.push({
