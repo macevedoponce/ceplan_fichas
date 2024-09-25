@@ -206,17 +206,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 captureNextAsNote = false; // Restablecer la variable
                 isTableContent = false; // Fin de la tabla
-                skipNextParagraph = true; // Omitir el siguiente párrafo de la sección de párrafos
+                skipNextParagraph = false; // Marcar para omitir el siguiente párrafo en la sección de párrafos
                 return; // Continuar al siguiente párrafo
             }
     
             // Omitir el siguiente párrafo si es la nota que ya se agregó a la figura
             if (skipNextParagraph) {
-                skipNextParagraph = false; // Restablecer la variable
+                skipNextParagraph = false; // Restablecer la variable después de omitir
                 return; // Omitir este párrafo
             }
     
-            // Si no estamos dentro de una tabla, procesar el párrafo normalmente
+            // Si no estamos dentro de una tabla y el párrafo no es omitido, procesarlo normalmente
             if (!isTableContent) {
                 // Detectar si el párrafo comienza con "Figura" seguido de un número.
                 if (trimmedParagraph.match(/^figura\s+\d+/i)) {
