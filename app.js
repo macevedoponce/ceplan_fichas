@@ -298,6 +298,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mostrar contenido en el orden natural con orden y botón de copiar
         parsedContent.contentFlow.forEach(item => {
             if (item.type === 'paragraph') {
+
+                // Normalizar el contenido del párrafo
+                const normalizedParagraph = cleanAndNormalizeParagraph(item.content);
+
                 // Crear una tarjeta para el párrafo
                 const paragraphCard = document.createElement('div');
                 paragraphCard.classList.add('paragraph-card', 'p-4', 'mb-4', 'rounded-lg', 'shadow', 'border', 'border-gray-300', 'dark:border-gray-700', 'transition', 'hover:shadow-lg', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
@@ -320,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 copyButton.classList.add('bg-blue-500', 'text-white', 'flex', 'items-center', 'p-2', 'rounded', 'hover:bg-blue-600', 'active:bg-blue-700', 'transition', 'duration-200');
                 copyButton.addEventListener('click', () => {
-                    copyToClipboard(item.content);
+                    copyToClipboard(normalizedParagraph);
                     
                     // Cambiar el texto a "Copiado" temporalmente
                     const originalText = copyButton.innerHTML;
@@ -346,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
                 const paragraphContent = document.createElement('p');
                 paragraphContent.classList.add('text-gray-800', 'dark:text-gray-300');
-                paragraphContent.innerHTML = item.content; // Usar innerHTML para mantener el formato
+                paragraphContent.innerHTML = normalizedParagraph ; // Usar innerHTML para mantener el formato
     
                 paragraphCard.appendChild(paragraphHeader);
                 paragraphCard.appendChild(paragraphContent);
@@ -499,9 +503,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function cleanAndNormalizeParagraph(paragraph) {
+        // Eliminar caracteres invisibles o no imprimibles de un párrafo específico
+        let cleanedParagraph = paragraph.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Eliminar espacios en blanco especiales (zero-width)
+    
+        // Reemplazar caracteres no imprimibles o de control en el párrafo
+        cleanedParagraph = cleanedParagraph.replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); 
+    
+        // Normalizar el texto del párrafo a un formato estándar (NFC - Normalization Form C)
+        cleanedParagraph = cleanedParagraph.normalize('NFC');
+    
+        return cleanedParagraph;
+    }
+    
+
+    // Función para copiar el contenido al portapapeles
     function copyToClipboard(html) {
+        // Reemplazar etiquetas <br> con saltos de línea si existen
+        let paragraphs = html.replace(/<br\s*\/?>/gi, '\n');
+
+        // Dividir el contenido por saltos de línea dobles para identificar párrafos
+        paragraphs = paragraphs.split('\n\n').map(paragraph => {
+            // Limpiar y normalizar cada párrafo individualmente
+            return cleanAndNormalizeParagraph(paragraph);
+        }).join('\n\n'); // Unir los párrafos con doble salto de línea para mantener la estructura
+
+        // Copiar el texto limpio al portapapeles
         const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = html;
+        tempTextArea.value = paragraphs; // Usar el contenido limpio con saltos de línea intactos
         document.body.appendChild(tempTextArea);
         tempTextArea.select();
         document.execCommand('copy');
@@ -509,7 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mostrar mensaje para informar que el texto se copió
         showToast('Contenido copiado al portapapeles');
-    }
+}
+
     
     // Función para mostrar un toast de confirmación
     function showToast(message) {
