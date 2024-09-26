@@ -306,26 +306,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const contentDiv = document.getElementById('content');
         const referencesDiv = document.getElementById('references');
         const figuresDiv = document.getElementById('figures');
-
+    
         // Limpiar contenido anterior
         contentDiv.innerHTML = '';
         referencesDiv.innerHTML = '';
         figuresDiv.innerHTML = '';
-
-        let order = 1; // Orden inicial
-
+    
+        let paragraphOrder = 1; // Orden inicial para los párrafos
+    
         // Mostrar contenido en el orden natural con orden y botón de copiar
         parsedContent.contentFlow.forEach(item => {
             if (item.type === 'paragraph') {
+                // Crear una tarjeta para el párrafo
                 const paragraphCard = document.createElement('div');
                 paragraphCard.classList.add('paragraph-card', 'p-4', 'mb-4', 'rounded-lg', 'shadow', 'border', 'border-gray-300', 'dark:border-gray-700', 'transition', 'hover:shadow-lg', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
             
                 const paragraphHeader = document.createElement('div');
                 paragraphHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
             
-                const paragraphOrder = document.createElement('span');
-                paragraphOrder.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
-                paragraphOrder.textContent = `Orden ${order}:`;
+                const paragraphOrderLabel = document.createElement('span');
+                paragraphOrderLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
+                paragraphOrderLabel.textContent = `Orden ${paragraphOrder}:`; // Usar el orden actual
             
                 const copyButton = document.createElement('button');
                 copyButton.innerHTML = `
@@ -358,33 +359,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         copyButton.classList.replace('bg-green-500', 'bg-blue-500'); // Restaurar el color de fondo
                     }, 1500);
                 });
-
-            
-                paragraphHeader.appendChild(paragraphOrder);
+    
+                paragraphHeader.appendChild(paragraphOrderLabel);
                 paragraphHeader.appendChild(copyButton);
             
                 const paragraphContent = document.createElement('p');
                 paragraphContent.classList.add('text-gray-800', 'dark:text-gray-300');
-                paragraphContent.innerHTML = item.content;
-            
+                paragraphContent.innerHTML = item.content; // Usar innerHTML para mantener el formato
+    
                 paragraphCard.appendChild(paragraphHeader);
                 paragraphCard.appendChild(paragraphContent);
                 contentDiv.appendChild(paragraphCard);
             
-                order++; // Incrementar orden
+                paragraphOrder++; // Incrementar orden para el siguiente párrafo
             }
-            
-
+    
             if (item.type === 'figure') {
+                // Crear una tarjeta para la figura
                 const figureCard = document.createElement('div');
                 figureCard.classList.add('figure-card', 'p-4', 'mb-4', 'rounded-lg', 'shadow', 'border', 'border-gray-300', 'dark:border-gray-700', 'transition', 'hover:shadow-lg', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
             
                 const figureHeader = document.createElement('div');
                 figureHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
             
-                const figureOrder = document.createElement('span');
-                figureOrder.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
-                figureOrder.textContent = `Orden ${order}:`;
+                const figureOrderLabel = document.createElement('span');
+                figureOrderLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
+                figureOrderLabel.textContent = `Orden ${paragraphOrder - 1}:`; // Usar el mismo orden que el párrafo anterior
             
                 const copyFigureButton = document.createElement('button');
                 copyFigureButton.innerHTML = `
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 copyFigureButton.classList.add('bg-blue-500', 'text-white', 'flex', 'items-center', 'p-2', 'rounded', 'hover:bg-blue-600', 'active:bg-blue-700', 'transition', 'duration-200');
                 copyFigureButton.addEventListener('click', () => {
                     copyToClipboard(item.content);
-
+    
                     // Cambiar el texto a "Copiado" temporalmente
                     const originalText = copyFigureButton.innerHTML;
                     copyFigureButton.innerHTML = `
@@ -410,22 +410,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         </span>
                     `;
                     copyFigureButton.classList.replace('bg-blue-500', 'bg-green-500'); // Cambiar el color de fondo temporalmente
-
+    
                     // Revertir después de 1.5 segundos
                     setTimeout(() => {
                         copyFigureButton.innerHTML = originalText;
                         copyFigureButton.classList.replace('bg-green-500', 'bg-blue-500'); // Restaurar el color de fondo
                     }, 1500);
                 });
-
-            
-                figureHeader.appendChild(figureOrder);
+    
+                figureHeader.appendChild(figureOrderLabel);
                 figureHeader.appendChild(copyFigureButton);
             
                 const figureContent = document.createElement('p');
                 figureContent.classList.add('text-gray-800', 'dark:text-gray-300');
                 figureContent.innerHTML = item.content;
-            
+    
                 figureCard.appendChild(figureHeader);
                 figureCard.appendChild(figureContent);
             
@@ -437,16 +436,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     const noteHeader = document.createElement('div');
                     noteHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
             
-                    const noteOrder = document.createElement('span');
-                    noteOrder.classList.add('text-gray-500', 'dark:text-gray-400', 'italic');
-                    noteOrder.textContent = `Nota ${order}.`;
+                    const noteOrderLabel = document.createElement('span');
+                    noteOrderLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'italic');
+                    noteOrderLabel.textContent = `Nota ${paragraphOrder - 1}:`; // Usar el mismo orden que el párrafo anterior
             
                     const copyNoteButton = document.createElement('button');
                     copyNoteButton.textContent = 'Copiar Nota';
                     copyNoteButton.classList.add('bg-blue-500', 'text-white', 'p-2', 'rounded', 'hover:bg-blue-600');
                     copyNoteButton.addEventListener('click', () => copyToClipboard(item.note));
             
-                    noteHeader.appendChild(noteOrder);
+                    noteHeader.appendChild(noteOrderLabel);
                     noteHeader.appendChild(copyNoteButton);
             
                     const noteContent = document.createElement('p');
@@ -459,11 +458,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             
                 figuresDiv.appendChild(figureCard);
-                order++;
             }
-            
         });
-
+    
         // Mostrar referencias completas sin orden, con botón de copiar
         parsedContent.references.forEach(ref => {
             const referenceCard = document.createElement('div');
@@ -488,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             copyButton.classList.add('bg-blue-500', 'text-white', 'flex', 'items-center', 'p-2', 'rounded', 'hover:bg-blue-600', 'active:bg-blue-700', 'transition', 'duration-200');
             copyButton.addEventListener('click', () => {
                 copyToClipboard(ref.content);
-
+    
                 // Cambiar el texto a "Copiado" temporalmente
                 const originalText = copyButton.innerHTML;
                 copyButton.innerHTML = `
@@ -500,28 +497,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                 `;
                 copyButton.classList.replace('bg-blue-500', 'bg-green-500'); // Cambiar el color de fondo temporalmente
-
+    
                 // Revertir después de 1.5 segundos
                 setTimeout(() => {
                     copyButton.innerHTML = originalText;
                     copyButton.classList.replace('bg-green-500', 'bg-blue-500'); // Restaurar el color de fondo
                 }, 1500);
             });
-
-        
+    
             referenceHeader.appendChild(referenceLabel);
             referenceHeader.appendChild(copyButton);
         
             const referenceContent = document.createElement('p');
             referenceContent.classList.add('text-gray-800', 'dark:text-gray-300');
-            referenceContent.textContent = ref.content;
+            referenceContent.innerHTML = ref.content;
         
             referenceCard.appendChild(referenceHeader);
             referenceCard.appendChild(referenceContent);
             referencesDiv.appendChild(referenceCard);
         });
-        
     }
+    
 
     function copyToClipboard(html) {
         const tempTextArea = document.createElement('textarea');
