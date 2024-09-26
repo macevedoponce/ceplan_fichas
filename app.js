@@ -126,32 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Nombre de archivo actualizado en dropzone:', fileName);
     }
 
-    // Restablecer el valor del input después de procesar el archivo
-    function handleFileUpload(files) {
-        if (files.length === 0) {
-            console.error('No se seleccionó ningún archivo.');
-            return;
-        }
-
-        // Procesar el archivo seleccionado
-        const file = files[0];
-        console.log('Procesando archivo:', file.name);
-
-        // Aquí iría la lógica para procesar el archivo...
-
-        // Después de procesar el archivo, restablecer el input
-        fileInput.value = '';
-        console.log('Input restablecido después de procesar el archivo.');
-    }
-
-    /*function updateDropzoneText() {
-        const fileName = fileInput.files.length ? fileInput.files[0].name : 'Arrastra y suelta el archivo aquí o haz clic para seleccionar';
-        dropzone.querySelector('p').textContent = fileName;
-    }*/
-
     // Función para parsear el contenido del documento
     function parseContent(content) {
-        const referencePattern = /\[(\d+)\]/g; // Patrón para detectar referencias [1], [2], etc.
+        const referencePattern = /\[(\d+(?:,\s*\d+)*)\]/g; // Patrón para detectar referencias múltiples como [9, 10, 11]
         const references = {}; // Almacenar las URLs de las referencias
         let contentFlow = []; // Array para almacenar el contenido con el orden natural
     
@@ -289,9 +266,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reemplazar referencias en el contenido principal
         contentFlow = contentFlow.map(item => {
             if (item.type === 'paragraph') {
-                item.content = item.content.replace(referencePattern, (match, refNumber) => {
-                    const refUrl = references[refNumber] || '#';
-                    return `<a href="${refUrl}" target="_blank">[${refNumber}]</a>`;
+                item.content = item.content.replace(referencePattern, (match, refNumbers) => {
+                    // Separar referencias múltiples en un array
+                    const separateRefs = refNumbers.split(',').map(num => num.trim());
+                    // Crear un enlace separado para cada referencia
+                    return separateRefs.map(refNumber => {
+                        const refUrl = references[refNumber] || '#';
+                        return `<a href="${refUrl}" target="_blank">[${refNumber}]</a>`;
+                    }).join(' '); // Unir todas las referencias separadas por un espacio
                 });
             }
             return item;
@@ -299,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
         return { contentFlow: contentFlow, references: fullReferences };
     }
-    
 
     // Función para mostrar el contenido procesado en el HTML
     function displayContent(parsedContent) {
@@ -517,7 +498,6 @@ document.addEventListener('DOMContentLoaded', () => {
             referencesDiv.appendChild(referenceCard);
         });
     }
-    
 
     function copyToClipboard(html) {
         const tempTextArea = document.createElement('textarea');
