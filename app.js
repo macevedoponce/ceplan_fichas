@@ -5,6 +5,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
     const dropzone = document.getElementById('dropzone');
+    const copyParagraphsButton = document.getElementById('copy-paragraphs-button');
+    const copyReferencesButton = document.getElementById('copy-references-button');
+
+    // Evento para copiar el contenido de la sección de párrafos
+    copyParagraphsButton.addEventListener('click', () => {
+        const contentDiv = document.getElementById('content');
+        if (contentDiv) {
+            // Seleccionar todo el contenido HTML de los párrafos
+            const paragraphsHtml = Array.from(contentDiv.querySelectorAll('.paragraph-card p'))
+                .map(p => p.innerHTML) // Usar innerHTML para incluir los enlaces y el formato
+                .join('\n\n'); // Unir párrafos con saltos de línea en HTML
+
+            // Copiar el contenido HTML al portapapeles
+            copyToClipboard(paragraphsHtml);
+        }
+    });
+
+    // Evento para copiar el contenido de la sección de referencias
+    copyReferencesButton.addEventListener('click', () => {
+        const referencesDiv = document.getElementById('references');
+        if (referencesDiv) {
+            // Seleccionar todo el contenido HTML de las referencias
+            const referencesHtml = Array.from(referencesDiv.querySelectorAll('.reference-card p'))
+                .map(p => p.innerHTML) // Usar innerHTML para incluir los enlaces y el formato
+                .join('\n\n'); // Unir referencias con saltos de línea en HTML
+
+            // Copiar el contenido HTML al portapapeles
+            copyToClipboard(referencesHtml);
+        }
+    });
 
     // Validación de existencia de elementos
     if (!fileInput || !processButton || !progressBar || !progressText || !dropzone) {
@@ -493,21 +523,30 @@ document.addEventListener('DOMContentLoaded', () => {
         
     }
 
-    function copyToClipboard(text) {
+    function copyToClipboard(html) {
         const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = text;
+        tempTextArea.value = html;
         document.body.appendChild(tempTextArea);
         tempTextArea.select();
         document.execCommand('copy');
         document.body.removeChild(tempTextArea);
-    
-        // Mostrar el toast
-        showToast('Texto copiado al portapapeles');
+
+        // Mostrar mensaje para informar que el texto se copió
+        showToast('Contenido copiado al portapapeles');
     }
     
+    // Función para mostrar un toast de confirmación
     function showToast(message) {
-        const toastContainer = document.getElementById('toast-container');
+        const toastContainer = document.getElementById('toast-container') || document.createElement('div');
         
+        if (!document.getElementById('toast-container')) {
+            toastContainer.id = 'toast-container';
+            toastContainer.style.position = 'fixed';
+            toastContainer.style.bottom = '20px';
+            toastContainer.style.right = '20px';
+            document.body.appendChild(toastContainer);
+        }
+
         // Crear un nuevo toast
         const toast = document.createElement('div');
         toast.classList.add('toast', 'bg-blue-500', 'text-white', 'p-3', 'rounded-lg', 'shadow-lg', 'flex', 'items-center', 'space-x-2', 'transition', 'duration-300', 'opacity-0', 'transform', 'translate-y-4');
@@ -517,16 +556,16 @@ document.addEventListener('DOMContentLoaded', () => {
             </svg>
             <span>${message}</span>
         `;
-    
+
         // Agregar el toast al contenedor
         toastContainer.appendChild(toast);
-    
+
         // Mostrar el toast
         setTimeout(() => {
             toast.classList.remove('opacity-0', 'translate-y-4');
             toast.classList.add('opacity-100', 'translate-y-0');
         }, 100);
-    
+
         // Ocultar el toast después de 3 segundos
         setTimeout(() => {
             toast.classList.remove('opacity-100', 'translate-y-0');
