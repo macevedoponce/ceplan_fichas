@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 captureNextAsNote = false; // Restablecer la variable
                 isTableContent = false; // Fin de la tabla
-                skipNextParagraph = true; // Marcar para omitir el siguiente párrafo en la sección de párrafos
+                skipNextParagraph = false; // Marcar para omitir el siguiente párrafo en la sección de párrafos
                 return; // Continuar al siguiente párrafo
             }
     
