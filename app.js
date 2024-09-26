@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para parsear el contenido del documento
     function parseContent(content) {
         const referencePattern = /\[(\d+)\]/g; // Patrón para detectar referencias [1], [2], etc.
-        const references = {};
+        const references = {}; // Almacenar las URLs de las referencias
         let contentFlow = []; // Array para almacenar el contenido con el orden natural
     
         let isTableContent = false; // Variable para rastrear si estamos dentro de una tabla
@@ -178,6 +178,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Eliminar "Available:" de las referencias y limpiar el formato
         fullReferences.forEach(ref => {
             ref.content = ref.content.replace("Available:", "").trim(); // Reemplazar y limpiar
+    
+            // Eliminar el último carácter si es un punto
+            if (ref.content.endsWith(".")) {
+                ref.content = ref.content.slice(0, -1); // Eliminar el último carácter
+            }
+        });
+    
+        // Eliminar el último carácter de las URLs de las referencias si terminan en un punto
+        Object.keys(references).forEach(key => {
+            if (references[key].endsWith(".")) {
+                references[key] = references[key].slice(0, -1); // Eliminar el último carácter de la URL
+            }
         });
     
         let processedText = content.substring(0, refSectionStart);
@@ -206,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 captureNextAsNote = false; // Restablecer la variable
                 isTableContent = false; // Fin de la tabla
-                skipNextParagraph = false; // Marcar para omitir el siguiente párrafo en la sección de párrafos
+                skipNextParagraph = true; // Marcar para omitir el siguiente párrafo en la sección de párrafos
                 return; // Continuar al siguiente párrafo
             }
     
