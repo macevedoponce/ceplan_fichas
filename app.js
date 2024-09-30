@@ -7,6 +7,81 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropzone = document.getElementById('dropzone');
     const copyParagraphsButton = document.getElementById('copy-paragraphs-button');
     const copyReferencesButton = document.getElementById('copy-references-button');
+    const themeToggleSwitch = document.getElementById('theme-toggle-switch');
+    const dot = document.querySelector('.dot');
+    const htmlElement = document.documentElement;
+    // Elementos de Tabs
+    const tabParagraphs = document.getElementById('tab-paragraphs');
+    const tabFigures = document.getElementById('tab-figures');
+    const tabReferences = document.getElementById('tab-references');
+
+    // Contenedores de Contenido
+    const contentParagraphs = document.getElementById('content-paragraphs');
+    const contentFigures = document.getElementById('content-figures');
+    const contentReferences = document.getElementById('content-references');
+
+    // Función para Mostrar/Ocultar Contenido de Tabs
+    function showTabContent(tab, content) {
+        // Ocultar todos los contenidos
+        contentParagraphs.classList.add('hidden');
+        contentFigures.classList.add('hidden');
+        contentReferences.classList.add('hidden');
+
+        // Quitar estilos activos de todos los tabs
+        tabParagraphs.classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
+        tabFigures.classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
+        tabReferences.classList.remove('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
+
+        // Mostrar el contenido seleccionado
+        content.classList.remove('hidden');
+
+        // Aplicar estilo activo al tab seleccionado
+        tab.classList.add('text-blue-600', 'dark:text-blue-400', 'border-blue-600', 'dark:border-blue-400');
+    }
+
+    // Eventos de los Tabs
+    tabParagraphs.addEventListener('click', () => showTabContent(tabParagraphs, contentParagraphs));
+    tabFigures.addEventListener('click', () => showTabContent(tabFigures, contentFigures));
+    tabReferences.addEventListener('click', () => showTabContent(tabReferences, contentReferences));
+
+    // Mostrar el contenido inicial
+    showTabContent(tabParagraphs, contentParagraphs);
+    
+    // Inicializar tema basado en la preferencia almacenada
+    if (localStorage.getItem('theme') === 'light') {
+        htmlElement.classList.remove('dark');
+        themeToggleSwitch.checked = false;
+        dot.style.transform = 'translateX(0)';
+    } else {
+        htmlElement.classList.add('dark');
+        themeToggleSwitch.checked = true;
+        dot.style.transform = 'translateX(100%)';
+    }
+
+    // Evento de cambio de tema
+    themeToggleSwitch.addEventListener('change', () => {
+        if (themeToggleSwitch.checked) {
+            htmlElement.classList.add('dark');
+            dot.style.transform = 'translateX(100%)';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            htmlElement.classList.remove('dark');
+            dot.style.transform = 'translateX(0)';
+            localStorage.setItem('theme', 'light');
+        }
+    });
+
+            
+
+    // Prevenir el comportamiento predeterminado en todos los eventos del dropzone
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
     // Evento para copiar el contenido de la sección de párrafos
     copyParagraphsButton.addEventListener('click', () => {
@@ -89,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzone.addEventListener('click', () => fileInput.click());
 
     dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
         dropzone.classList.add('bg-blue-50', 'border-blue-400');
     });
 
@@ -98,26 +172,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
         dropzone.classList.remove('bg-blue-50', 'border-blue-400');
-        fileInput.files = e.dataTransfer.files;
-        updateDropzoneText();
+        const files = e.dataTransfer.files;
+
+        // Verificar si es un archivo .docx antes de actualizar el input
+        if (files.length > 0 && files[0].type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+            fileInput.files = files; // Asigna el archivo al input
+            updateDropzoneText(); // Actualiza el nombre del archivo en el dropzone
+        } else {
+            alert("Por favor, cargue un archivo .docx");
+        }
     });
 
-    //fileInput.addEventListener('change', updateDropzoneText);
-
+    // Manejador de evento para el cambio de archivo en el input
     fileInput.addEventListener('change', (event) => {
-        console.log('Evento change disparado.');
         const files = event.target.files;
 
         if (files.length > 0) {
-            console.log('Archivo detectado en el primer clic:', files[0].name);
+            console.log('Archivo detectado:', files[0].name);
             updateDropzoneText(); // Actualiza el nombre del archivo en el dropzone
         } else {
-            console.log('No se detectó ningún archivo en el primer clic.');
+            console.log('No se detectó ningún archivo.');
         }
     });
-    
+
+    // Función para actualizar el texto del dropzone
     function updateDropzoneText() {
         const fileName = fileInput.files.length ? fileInput.files[0].name : 'Arrastra y suelta el archivo aquí o haz clic para seleccionar';
         dropzone.querySelector('p').textContent = fileName;
@@ -295,92 +374,87 @@ document.addEventListener('DOMContentLoaded', () => {
     
         let paragraphOrder = 1; // Orden inicial para los párrafos
     
-        // Mostrar contenido en el orden natural con orden y botón de copiar
+        // Mostrar contenido en el orden natural con tarjetas elegantes y botones mejorados
         parsedContent.contentFlow.forEach(item => {
             if (item.type === 'paragraph') {
-
-                // Normalizar el contenido del párrafo
-                const normalizedParagraph = cleanAndNormalizeParagraph(item.content);
-
                 // Crear una tarjeta para el párrafo
                 const paragraphCard = document.createElement('div');
-                paragraphCard.classList.add('paragraph-card', 'p-4', 'mb-4', 'rounded-lg', 'shadow', 'border', 'border-gray-300', 'dark:border-gray-700', 'transition', 'hover:shadow-lg', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
-            
+                paragraphCard.classList.add('paragraph-card', 'p-6', 'mb-6', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800', 'transition', 'hover:shadow-lg', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+    
                 const paragraphHeader = document.createElement('div');
-                paragraphHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
-            
+                paragraphHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-4');
+    
                 const paragraphOrderLabel = document.createElement('span');
-                paragraphOrderLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
-                paragraphOrderLabel.textContent = `Orden ${paragraphOrder}:`; // Usar el orden actual
-            
+                paragraphOrderLabel.classList.add('text-gray-700', 'dark:text-gray-400', 'font-semibold');
+                paragraphOrderLabel.textContent = `Párrafo ${paragraphOrder}:`;
+    
                 const copyButton = document.createElement('button');
                 copyButton.innerHTML = `
                     <span class="flex items-center space-x-2">
-                        <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 8v3a1 1 0 0 1-1 1H5m11 4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1m4 3v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7.13a1 1 0 0 1 .24-.65L7.7 8.35A1 1 0 0 1 8.46 8H13a1 1 0 0 1 1 1Z"/>
                         </svg>
-                        <span>Copiar</span>
                     </span>
                 `;
-                copyButton.classList.add('bg-blue-500', 'text-white', 'flex', 'items-center', 'p-2', 'rounded', 'hover:bg-blue-600', 'active:bg-blue-700', 'transition', 'duration-200');
+                copyButton.classList.add('p-2', 'rounded', 'hover:bg-gray-200', 'dark:hover:bg-gray-600', 'focus:outline-none', 'transition', 'duration-200', 'ease-in-out', 'tooltip');
+                copyButton.setAttribute('title', 'Copiar párrafo');
                 copyButton.addEventListener('click', () => {
-                    copyToClipboard(normalizedParagraph);
-                    
+                    copyToClipboard(item.content);
+    
                     // Cambiar el texto a "Copiado" temporalmente
                     const originalText = copyButton.innerHTML;
                     copyButton.innerHTML = `
                         <span class="flex items-center space-x-2">
-                            <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.707 4.293a1 1 0 01.083 1.32l-.083.094-8 8a1 1 0 01-1.32.083l-.094-.083-4-4a1 1 0 011.32-1.497l.094.083L8 11.585l7.293-7.292a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span>Copiado</span>
                         </span>
                     `;
-                    copyButton.classList.replace('bg-blue-500', 'bg-green-500'); // Cambiar el color de fondo temporalmente
-                    
+                    copyButton.setAttribute('title', 'Copiado');
+    
                     // Revertir después de 1.5 segundos
                     setTimeout(() => {
                         copyButton.innerHTML = originalText;
-                        copyButton.classList.replace('bg-green-500', 'bg-blue-500'); // Restaurar el color de fondo
+                        copyButton.setAttribute('title', 'Copiar párrafo');
                     }, 1500);
                 });
     
                 paragraphHeader.appendChild(paragraphOrderLabel);
                 paragraphHeader.appendChild(copyButton);
-            
+    
                 const paragraphContent = document.createElement('p');
-                paragraphContent.classList.add('text-gray-800', 'dark:text-gray-300');
-                paragraphContent.innerHTML = normalizedParagraph ; // Usar innerHTML para mantener el formato
+                paragraphContent.classList.add('text-gray-700', 'dark:text-gray-300', 'leading-relaxed');
+                paragraphContent.innerHTML = item.content;
     
                 paragraphCard.appendChild(paragraphHeader);
                 paragraphCard.appendChild(paragraphContent);
                 contentDiv.appendChild(paragraphCard);
-            
-                paragraphOrder++; // Incrementar orden para el siguiente párrafo
+    
+                paragraphOrder++;
             }
     
             if (item.type === 'figure') {
                 // Crear una tarjeta para la figura
                 const figureCard = document.createElement('div');
-                figureCard.classList.add('figure-card', 'p-4', 'mb-4', 'rounded-lg', 'shadow', 'border', 'border-gray-300', 'dark:border-gray-700', 'transition', 'hover:shadow-lg', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
-            
+                figureCard.classList.add('figure-card', 'p-6', 'mb-6', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800', 'transition', 'hover:shadow-lg', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+    
                 const figureHeader = document.createElement('div');
-                figureHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
-            
+                figureHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-4');
+    
                 const figureOrderLabel = document.createElement('span');
-                figureOrderLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
-                figureOrderLabel.textContent = `Orden ${paragraphOrder - 1}:`; // Usar el mismo orden que el párrafo anterior
-            
+                figureOrderLabel.classList.add('text-gray-700', 'dark:text-gray-400', 'font-semibold');
+                figureOrderLabel.textContent = `Figura ${paragraphOrder - 1}:`;
+    
                 const copyFigureButton = document.createElement('button');
                 copyFigureButton.innerHTML = `
                     <span class="flex items-center space-x-2">
-                        <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 8v3a1 1 0 0 1-1 1H5m11 4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1m4 3v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7.13a1 1 0 0 1 .24-.65L7.7 8.35A1 1 0 0 1 8.46 8H13a1 1 0 0 1 1 1Z"/>
                         </svg>
-                        <span>Copiar</span>
                     </span>
                 `;
-                copyFigureButton.classList.add('bg-blue-500', 'text-white', 'flex', 'items-center', 'p-2', 'rounded', 'hover:bg-blue-600', 'active:bg-blue-700', 'transition', 'duration-200');
+                copyFigureButton.classList.add('p-2', 'rounded', 'hover:bg-gray-200', 'dark:hover:bg-gray-600', 'focus:outline-none', 'transition', 'duration-200', 'ease-in-out', 'tooltip');
+                copyFigureButton.setAttribute('title', 'Copiar figura');
                 copyFigureButton.addEventListener('click', () => {
                     copyToClipboard(item.content);
     
@@ -388,60 +462,86 @@ document.addEventListener('DOMContentLoaded', () => {
                     const originalText = copyFigureButton.innerHTML;
                     copyFigureButton.innerHTML = `
                         <span class="flex items-center space-x-2">
-                            <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.707 4.293a1 1 0 01.083 1.32l-.083.094-8 8a1 1 0 01-1.32.083l-.094-.083-4-4a1 1 0 011.32-1.497l.094.083L8 11.585l7.293-7.292a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span>Copiado</span>
                         </span>
                     `;
-                    copyFigureButton.classList.replace('bg-blue-500', 'bg-green-500'); // Cambiar el color de fondo temporalmente
+                    copyFigureButton.setAttribute('title', 'Copiado');
     
                     // Revertir después de 1.5 segundos
                     setTimeout(() => {
                         copyFigureButton.innerHTML = originalText;
-                        copyFigureButton.classList.replace('bg-green-500', 'bg-blue-500'); // Restaurar el color de fondo
+                        copyFigureButton.setAttribute('title', 'Copiar figura');
                     }, 1500);
                 });
     
                 figureHeader.appendChild(figureOrderLabel);
                 figureHeader.appendChild(copyFigureButton);
-            
+    
                 const figureContent = document.createElement('p');
-                figureContent.classList.add('text-gray-800', 'dark:text-gray-300');
+                figureContent.classList.add('text-gray-700', 'dark:text-gray-300', 'leading-relaxed');
                 figureContent.innerHTML = item.content;
     
                 figureCard.appendChild(figureHeader);
                 figureCard.appendChild(figureContent);
-            
-                // Mostrar nota de la figura si existe
+    
                 if (item.note) {
                     const noteDiv = document.createElement('div');
-                    noteDiv.classList.add('mt-4', 'p-4', 'rounded-lg', 'bg-gray-50', 'dark:bg-gray-700');
-            
+                    noteDiv.classList.add('mt-4', 'p-4', 'rounded-lg', 'bg-gray-50', 'dark:bg-gray-700', 'transition', 'hover:bg-gray-100', 'dark:hover:bg-gray-600'); // Corregido el color del hover
+    
                     const noteHeader = document.createElement('div');
                     noteHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
-            
+    
                     const noteOrderLabel = document.createElement('span');
                     noteOrderLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'italic');
-                    noteOrderLabel.textContent = `Nota ${paragraphOrder - 1}:`; // Usar el mismo orden que el párrafo anterior
-            
+                    noteOrderLabel.textContent = `Nota ${paragraphOrder - 1}:`;
+    
                     const copyNoteButton = document.createElement('button');
-                    copyNoteButton.textContent = 'Copiar Nota';
-                    copyNoteButton.classList.add('bg-blue-500', 'text-white', 'p-2', 'rounded', 'hover:bg-blue-600');
-                    copyNoteButton.addEventListener('click', () => copyToClipboard(item.note));
-            
+                    copyNoteButton.innerHTML = `
+                        <span class="flex items-center space-x-2">
+                            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 8v3a1 1 0 0 1-1 1H5m11 4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1m4 3v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7.13a1 1 0 0 1 .24-.65L7.7 8.35A1 1 0 0 1 8.46 8H13a1 1 0 0 1 1 1Z"/>
+                            </svg>
+                            <span>Copiar Nota</span>
+                        </span>
+                    `;
+                    copyNoteButton.classList.add('p-2', 'rounded', 'hover:bg-gray-200', 'dark:hover:bg-gray-600', 'focus:outline-none', 'transition', 'duration-200', 'ease-in-out', 'tooltip');
+                    copyNoteButton.setAttribute('title', 'Copiar nota');
+                    copyNoteButton.addEventListener('click', () => {
+                        copyToClipboard(item.note);
+    
+                        // Cambiar el texto a "Copiado" temporalmente
+                        const originalText = copyNoteButton.innerHTML;
+                        copyNoteButton.innerHTML = `
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.707 4.293a1 1 0 01.083 1.32l-.083.094-8 8a1 1 0 01-1.32.083l-.094-.083-4-4a1 1 0 011.32-1.497l.094.083L8 11.585l7.293-7.292a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                <span>Copiado</span>
+                            </span>
+                        `;
+                        copyNoteButton.setAttribute('title', 'Copiado');
+    
+                        // Revertir después de 1.5 segundos
+                        setTimeout(() => {
+                            copyNoteButton.innerHTML = originalText;
+                            copyNoteButton.setAttribute('title', 'Copiar nota');
+                        }, 1500);
+                    });
+    
                     noteHeader.appendChild(noteOrderLabel);
                     noteHeader.appendChild(copyNoteButton);
-            
+    
                     const noteContent = document.createElement('p');
-                    noteContent.classList.add('text-gray-800', 'dark:text-gray-300');
+                    noteContent.classList.add('text-gray-700', 'dark:text-gray-300', 'leading-relaxed');
                     noteContent.innerHTML = item.note;
-            
+    
                     noteDiv.appendChild(noteHeader);
                     noteDiv.appendChild(noteContent);
                     figureCard.appendChild(noteDiv);
                 }
-            
+    
                 figuresDiv.appendChild(figureCard);
             }
         });
@@ -449,25 +549,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mostrar referencias completas sin orden, con botón de copiar
         parsedContent.references.forEach(ref => {
             const referenceCard = document.createElement('div');
-            referenceCard.classList.add('reference-card', 'p-4', 'mb-4', 'rounded-lg', 'shadow', 'border', 'border-gray-300', 'dark:border-gray-700', 'transition', 'hover:shadow-lg', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
-        
+            referenceCard.classList.add('reference-card', 'p-6', 'mb-6', 'rounded-lg', 'shadow-md', 'border', 'border-gray-200', 'dark:border-gray-700', 'bg-white', 'dark:bg-gray-800', 'transition', 'hover:shadow-lg', 'hover:bg-gray-50', 'dark:hover:bg-gray-700');
+    
             const referenceHeader = document.createElement('div');
-            referenceHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-2');
-        
+            referenceHeader.classList.add('flex', 'justify-between', 'items-center', 'mb-4');
+    
             const referenceLabel = document.createElement('span');
-            referenceLabel.classList.add('text-gray-500', 'dark:text-gray-400', 'font-semibold');
+            referenceLabel.classList.add('text-gray-700', 'dark:text-gray-400', 'font-semibold');
             referenceLabel.textContent = `Referencia:`;
-        
+    
             const copyButton = document.createElement('button');
             copyButton.innerHTML = `
                 <span class="flex items-center space-x-2">
-                    <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 8v3a1 1 0 0 1-1 1H5m11 4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1m4 3v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7.13a1 1 0 0 1 .24-.65L7.7 8.35A1 1 0 0 1 8.46 8H13a1 1 0 0 1 1 1Z"/>
                     </svg>
-                    <span>Copiar</span>
                 </span>
             `;
-            copyButton.classList.add('bg-blue-500', 'text-white', 'flex', 'items-center', 'p-2', 'rounded', 'hover:bg-blue-600', 'active:bg-blue-700', 'transition', 'duration-200');
+            copyButton.classList.add('p-2', 'rounded', 'hover:bg-gray-200', 'dark:hover:bg-gray-600', 'focus:outline-none', 'transition', 'duration-200', 'ease-in-out', 'tooltip');
+            copyButton.setAttribute('title', 'Copiar referencia');
             copyButton.addEventListener('click', () => {
                 copyToClipboard(ref.content);
     
@@ -475,62 +575,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 const originalText = copyButton.innerHTML;
                 copyButton.innerHTML = `
                     <span class="flex items-center space-x-2">
-                        <svg class="w-6 h-6 text-white dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-green-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M16.707 4.293a1 1 0 01.083 1.32l-.083.094-8 8a1 1 0 01-1.32.083l-.094-.083-4-4a1 1 0 011.32-1.497l.094.083L8 11.585l7.293-7.292a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
-                        <span>Copiado</span>
                     </span>
                 `;
-                copyButton.classList.replace('bg-blue-500', 'bg-green-500'); // Cambiar el color de fondo temporalmente
+                copyButton.setAttribute('title', 'Copiado');
     
                 // Revertir después de 1.5 segundos
                 setTimeout(() => {
                     copyButton.innerHTML = originalText;
-                    copyButton.classList.replace('bg-green-500', 'bg-blue-500'); // Restaurar el color de fondo
+                    copyButton.setAttribute('title', 'Copiar referencia');
                 }, 1500);
             });
     
             referenceHeader.appendChild(referenceLabel);
             referenceHeader.appendChild(copyButton);
-        
+    
             const referenceContent = document.createElement('p');
-            referenceContent.classList.add('text-gray-800', 'dark:text-gray-300');
+            referenceContent.classList.add('text-gray-700', 'dark:text-gray-300', 'leading-relaxed');
             referenceContent.innerHTML = ref.content;
-        
+    
             referenceCard.appendChild(referenceHeader);
             referenceCard.appendChild(referenceContent);
             referencesDiv.appendChild(referenceCard);
         });
     }
-
-    function cleanAndNormalizeParagraph(paragraph) {
-        // Eliminar caracteres invisibles o no imprimibles de un párrafo específico
-        let cleanedParagraph = paragraph.replace(/[\u200B-\u200D\uFEFF]/g, ''); // Eliminar espacios en blanco especiales (zero-width)
-    
-        // Reemplazar caracteres no imprimibles o de control en el párrafo
-        cleanedParagraph = cleanedParagraph.replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); 
-    
-        // Normalizar el texto del párrafo a un formato estándar (NFC - Normalization Form C)
-        cleanedParagraph = cleanedParagraph.normalize('NFC');
-    
-        return cleanedParagraph;
-    }
     
 
-    // Función para copiar el contenido al portapapeles
     function copyToClipboard(html) {
-        // Reemplazar etiquetas <br> con saltos de línea si existen
-        let paragraphs = html.replace(/<br\s*\/?>/gi, '\n');
-
-        // Dividir el contenido por saltos de línea dobles para identificar párrafos
-        paragraphs = paragraphs.split('\n\n').map(paragraph => {
-            // Limpiar y normalizar cada párrafo individualmente
-            return cleanAndNormalizeParagraph(paragraph);
-        }).join('\n\n'); // Unir los párrafos con doble salto de línea para mantener la estructura
-
-        // Copiar el texto limpio al portapapeles
         const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = paragraphs; // Usar el contenido limpio con saltos de línea intactos
+        tempTextArea.value = html;
         document.body.appendChild(tempTextArea);
         tempTextArea.select();
         document.execCommand('copy');
@@ -538,8 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Mostrar mensaje para informar que el texto se copió
         showToast('Contenido copiado al portapapeles');
-}
-
+    }
     
     // Función para mostrar un toast de confirmación
     function showToast(message) {
